@@ -1,14 +1,26 @@
 {
   "name": "swiper-cell",
-  "description": "滑动单元格",
-  "version": "1.0.0",
-  "author": "1099683985@qq.com",
+  "description": "弹性滑动单元格",
+  "version": "1.1.6",
+  "author": "litTaoTao <1099683985@qq.com>",
   "license": "MIT",
   "private": false,
-  "main": "./dist/swiper-cell.js",
+  "keywords": [
+    "swiper-cell",
+    "cell",
+    "vue",
+    "components"
+  ],
+  "main": "lib/swiper-cell.umd.js",
+  "module": "src/index.js",
+  "files": [
+    "src",
+    "lib"
+  ],
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack-dev-server --open --hot",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "lib": "vue-cli-service build --target lib --name swiper-cell --dest lib ./src/index.js"
   },
   "dependencies": {
     "vue": "^2.5.11"
@@ -26,9 +38,10 @@
     "cross-env": "^5.0.5",
     "css-loader": "^0.28.7",
     "file-loader": "^1.1.4",
-    "sass-loader": "^7.3.1",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^3.0.2",
     "vue-loader": "^13.0.5",
-    "vue-template-compiler": "^2.4.4",
+    "vue-template-compiler": "^2.5.13",
     "webpack": "^3.6.0",
     "webpack-dev-server": "^2.9.1"
   }
