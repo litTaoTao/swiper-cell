@@ -21,7 +21,9 @@
 			</div>
 			<div
 				@touchend="onClick()"
-				class="cell_content">SwipeCell{{this.dragging}}</div>
+				class="cell_content">
+					<slot></slot>
+				</div>
 			<!-- 右边 -->
 			<div ref="cellRight"
 				v-if="rightContent"
