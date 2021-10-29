@@ -5,22 +5,37 @@
 		v-click-outside="handleClickOutside"
 		@click="getClickHandler('cell')">
 		<div
-			:style="{'transform':rightContent.length && translateX(-1),'transition-duration':rightContent.length && dragging}">
-			<!-- <div ref="cellLeft" class="cell_left" @click="getClickHandler('left', true)">
-				<div>收藏</div>
-				<div>添加</div>
-			</div> -->
+			:style="{'transform':rightContent.length && translateX(-1),'transition-duration':leftContent.length && dragging}">
+			<!-- 左边 -->
+			<div ref="cellLeft"
+				 :class="['cell_left', isPostion]"
+				 v-if="leftContent"
+				 @click="getClickHandler('left', true)">
+				<div v-for="(item, index) in leftContent" :key="index">
+					<span>{{item.value}}</span>
+					<span v-if="item.icon">
+						<img v-if="/http/.test(item.icon)" :src="item.icon">
+						<i v-else :class="item.icon" aria-hidden="true"></i>
+					</span>
+				</div>
+			</div>
 			<div
 				@touchend="onClick()"
-				:class="cellContent">SwipeCell</div>
+				class="cell_content">SwipeCell{{this.dragging}}</div>
+			<!-- 右边 -->
 			<div ref="cellRight"
+				v-if="rightContent"
 				:class="['cell_right', isPostion]"
 				@click="getClickHandler('right', true)">
 				<div v-for="(item, index) in rightContent" 
-					:style="{'transform': translateX(index),'transition-duration':dragging, 'padding-right': paddingRight(index+1)}"
-					@touchend="cellTouchEnd"
+					:style="{'transform': translateX(index),'transition-duration':rightContent.length && dragging, 'padding-right': paddingRight(index+1)}"
+					@touchend="item.callBack&&item.callBack()"
 					:key="index">
-					{{item.value}}
+					<span>{{item.value}}</span>
+					<span v-if="item.icon">
+						<img v-if="/http/.test(item.icon)" :src="item.icon">
+						<i v-else :class="item.icon" aria-hidden="true"></i>
+					</span>
 				</div>
 			</div>
 		</div>
@@ -46,17 +61,36 @@ export default{
 			type: [Number, String],
 			default: '',
 		},
+		quotient: {
+			type: Array,
+			validator: value=>{
+				if(value.length>2) value.splice(2,value.length)
+				return true
+			},
+			default: ()=> [2.5,8]
+		},
 		// 限制最多传三个
 		rightContent: {
-			type: Array,
+			type: [Array,Boolean],
 			validator: value=>{
 				if(value.length>3) value.splice(3,value.length)
 				return true
 			},
 			default: ()=> [
-				{value:"标记",icon:""},
-				{value:"不再关注",icon:""},
+				{value:"标为未读",icon:""},
+				{value:"不显示",icon:""},
 				{value:"删除",icon:""}
+			],
+		},
+		// 限制最多传一个
+		leftContent: {
+			type: [Array,Boolean],
+			validator: value=>{
+				if(value.length>1) value.splice(1,value.length)
+				return true
+			},
+			default: ()=> [
+				{value:"标记",icon:"fa fa-star-o"}
 			],
 		},
 		//
@@ -75,9 +109,11 @@ export default{
 			isDragging: false,
 			//-位移
 			elasticX:0,
-			lefNodetWidthArr: [],
+			rightNodetWidthArr: [],
 			cellRightWidth:0,
-			cellLeftWidth:0
+			cellLeftWidth:0,
+			isLeft: false,
+			isRight: false
 		}
 	},
 	computed: {
@@ -89,33 +125,29 @@ export default{
 			return +this.rightWidth || this.getWidthByRef('cellRight');
 		},
 
-		isPostion(){
+		isPostion() {
 			return this.type && 'cellPostion' || ''
 		},
 
 		dragging(){
-			return this.offset && this.isDragging && '0s' || '0.6s'
+			return this.offset && this.isDragging && '0ms' || '300ms'
 		},
 		
-		translateX(){
+		translateX() {
 			return function(index) {
 				let width = 0;
-				this.lefNodetWidthArr.map((item, idx)=>{
+				this.rightNodetWidthArr.map((item, idx)=>{
 					if(idx < index) width += item.width
 				})
-				if(index < 0) return 'translateX(' + (this.offset +  (this.isElastic?this.elasticX:0)) + 'px)'
+				if(index < 0) return 'translateX(' + (this.offset + (this.isElastic?this.elasticX:0)) + 'px)'
 				return this.type && 'translateX(' + (-this.offset*width/this.cellRightWidth - (this.isElastic?this.elasticX/this.rightContent.length*index:0)) + 'px)' || ''
 			}
 		},
 
 		paddingRight(){
 			return function(index) { 
-				return 10 + (this.isElastic && Math.abs(this.elasticX/this.rightContent.length*index) || 0)  + 'px'
+				return 10 + (this.isElastic && Math.abs(this.elasticX/this.rightContent.length) || 0)  + 'px'
 			}
-		},
-
-		cellContent() {
-			return this.offset && 'cell_content' || 'cell_content_active'
 		}
 	},
 	mounted() {
@@ -124,7 +156,7 @@ export default{
 		this.cellLeftWidth = this.getWidthByRef('cellLeft');
 		this.$nextTick(()=> {
 			this.$refs['cellRight'].children && Array.from(this.$refs['cellRight'].children).map((item) => {
-				this.lefNodetWidthArr.push(item.getBoundingClientRect()) 
+				this.rightNodetWidthArr.push(item.getBoundingClientRect()) 
 			});
 		})
 		this.bindTouchEvent(this.$el);
@@ -167,6 +199,7 @@ export default{
 			this.$emit('open', {
 				position,
 				name: this.name,
+				close: this.close,
 				// @deprecated
 				// should be removed in next major version
 				detail: this.name,
@@ -190,6 +223,8 @@ export default{
 			if (this.disabled) {
 				return;
 			}
+			this.isLeft = false;
+			this.isRight = false;
 			this.startOffset = this.offset;
 			this.touchStart(event);
 		},
@@ -232,12 +267,31 @@ export default{
 					-this.computedRightWidth,
 					this.computedLeftWidth
 				);
+
+				if(this.offset>0 && !this.isRight){
+					this.isLeft = true
+				}else{
+					if(this.offset<0 && this.isLeft) {
+						this.offset = 0
+						this.elasticX = 0
+					}
+				}
+				if(this.offset<0 && !this.isLeft){
+					this.isRight = true
+				}else{
+					if(this.offset>0 && this.isRight) {
+						this.offset = 0
+						this.elasticX = 0
+					}
+				}
+				this.$emit('move', this.deltaX);
 				//增加弹性
 				if(this.computedRightWidth && this.offset === -this.computedRightWidth || this.computedLeftWidth && this.offset === this.computedLeftWidth){
 					//
 					this.preventDefault(event, this.stopPropagation);
+					let quotient = this.offset > 0 && this.quotient[0] || this.quotient[1]
 					//弹性系数
-					this.elasticX = (this.deltaX + this.startOffset - this.offset)/4;
+					this.elasticX = (this.deltaX + this.startOffset - this.offset)/quotient;
 				}
 			}else{
 				//上下滑动后取消close
@@ -311,10 +365,6 @@ export default{
 				this.onClick(position);
 			};
 		},
-		
-		cellTouchEnd() {
-			this.$emit('cellClick')
-		}
 	}
 }
 </script>
@@ -325,19 +375,17 @@ export default{
 	overflow: hidden;
 	line-height: 4em;
 	height: 4em;
+	background: #CFD0D2;
 	&>div{
 		height: 100%;
 		.cell_content{
 			height: 100%;
 			width: 100%;
+			position:absolute;
 			text-align: center;
-		}
-		.cell_content_active{
-			height: 100%;
-			width: 100%;
-			text-align: center;
+			background: #FFF;
 			&:active{
-				background: #e8e8e8;
+				background: #EEE;
 			}
 		}
 		.cell_left,.cell_right{
@@ -345,22 +393,35 @@ export default{
 			top: 0;
 			height: 100%;
 			display: flex;
-			color: #fff;
+			color: #FFF;
 			&>div{
 				white-space:nowrap;
 				display: flex;
 				align-items: center;
-				background: #ccc;
-				padding-left: 10px;
+				padding:0 10px;
+				&>span{
+					margin: 0 2px;
+				}
+			}
+		}
+		.cell_right{
+			right: 0;
+			transform: translateX(100%);
+			&>div:nth-child(1){
+				background: #3D83E5;
+			}
+			&>div:nth-child(2){
+				background: #EEA151;
+			}
+			&>div:nth-child(3){
+				background: #E75E58;
 			}
 		}
 		.cell_left{
 			left: 0;
-			transform:translateX(-100%);
-		}
-		.cell_right{
-			right: 0;
-			transform:translateX(100%);
+			&>div{
+				transform: translateX(-100%);
+			}
 		}
 		.cellPostion{
 			&>div{
