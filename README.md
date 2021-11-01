@@ -5,7 +5,7 @@
 ### Install
 
 ``` bash
-npm install swiper vue-awesome-swiper --save
+npm install swiper-cell --save
 
 ```
 
