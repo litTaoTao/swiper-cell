@@ -108,7 +108,7 @@ export default {
 | disabled	                     | 是否禁用滑动	            | boolean                                           | false
 | stop-propagation		         | 是否阻止滑动事件冒泡	     | boolean                                           | false
 | leftContent	                 | 左侧内容（最多一个）      | array \| boolean                                  | [<br />&emsp;{value:"标记",icon:"fa fa-star-o"}<br />]
-| rightContent	                 | 右侧内容（最多一个）      | array \| boolean                                  | [<br />&emsp;{value:"标为未读",icon:""},<br />&emsp;{value:"不显示",icon:""},<br />&emsp;{value:"删除",icon:""}<br />]
+| rightContent	                 | 右侧内容（最多三个）      | array \| boolean                                  | [<br />&emsp;{value:"标为未读",icon:""},<br />&emsp;{value:"不显示",icon:""},<br />&emsp;{value:"删除",icon:""}<br />]
 | quotient	                     | 左右两侧弹性系数	         | array                                             | [ 2.5, 8 ]
 | type	                         | 类型(0 \| 1)              | number \| string                                 | 1
 | isElastic	                     | 是否开启弹性	             | boolean                                           | true
