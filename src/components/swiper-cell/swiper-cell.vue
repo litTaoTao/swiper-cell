@@ -398,10 +398,15 @@ export default{
 			color: #FFF;
 			&>div{
 				white-space:nowrap;
+				box-sizing: border-box;
 				display: flex;
 				align-items: center;
 				padding:0 10px;
 				&>span{
+					pointer-events: none;
+					display: inline-block;
+					width: 100%;
+					text-align: center
 					margin: 0 2px;
 				}
 			}
