@@ -126,6 +126,6 @@ export default {
 | 事件名                          | 说明               | 回调参数    
 | ------------------------------ | -----------------   |------
 |click                           |点击时触发           | 关闭时的点击位置 (left right cell outside)
-|open                            |打开时触发           | {position: 'left' | 'right' ,name: string, close: Function}
+|open                            |打开时触发           | {position: 'left' \| 'right' ,name: string, close: Function}
 |close                           |关闭时触发           | { position: string , name: string }
 |move                            |移动时触发           | { deltaX: string }
