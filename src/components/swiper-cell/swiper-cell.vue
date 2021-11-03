@@ -5,7 +5,7 @@
 		v-click-outside="handleClickOutside"
 		@click="getClickHandler('cell')">
 		<div
-			:style="{'transform':rightContent.length && translateX(-1),'transition-duration':leftContent.length && dragging}">
+			:style="{'transform':translateX(-1),'transition-duration':dragging}">
 			<!-- 左边 -->
 			<div ref="cellLeft"
 				 :class="['cell_left', isPostion]"
@@ -23,7 +23,7 @@
 				@touchend="onClick()"
 				class="cell_content">
 					<slot></slot>
-				</div>
+			</div>
 			<!-- 右边 -->
 			<div ref="cellRight"
 				v-if="rightContent"
