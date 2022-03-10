@@ -1,8 +1,8 @@
-## swiper-cell
+# swiper-cell
 
 > 弹性滑动单元格
 
-### Install
+## Install
 
 ``` bash
 import SwiperCell from "swiper-cell";
@@ -10,20 +10,12 @@ import "swiper-cell/lib/style.css";
 
 ```
 
-###  Demo
-```手机预览
+##  Demo
+- [Example](https://littaotao.github.io/swiper-cell/dist/index)
+- 
+  ![Example QR](./assets/images/demo.png)
 
-![二维码](assets/images/demo.png "二维码")
-
-```
-
-```demo地址
-
-[demo地址：https://littaotao.github.io/swiper-cell/dist/index](https://littaotao.github.io/swiper-cell/dist/index)
-
-
-```
-
+### 使用方法
 ```html
 <template>
     <div>
