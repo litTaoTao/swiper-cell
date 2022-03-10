@@ -5,96 +5,200 @@
 ### Install
 
 ``` bash
-npm install swiper-cell --save
+import SwiperCell from "swiper-cell";
+import "swiper-cell/lib/style.css";
 
 ```
 
 ###  Demo
+```手机预览
+
+![二维码](assets/images/demo.png "二维码")
+
+```
+
+```demo地址
+
+[demo地址：https://littaotao.github.io/swiper-cell/dist/index](https://littaotao.github.io/swiper-cell/dist/index)
+
+
+```
+
 ```html
 <template>
-        <div>
-            <div class="swiperCell" v-for="i in 20" :key="i">
-                <swiper-cell :quotient="quotient"
-                            @touchstart.native="touchstart(i)"
-                            @move="move"
-                            @touchend.native="touchend"
-                            @close="close"
-                            :disabled="disabled"
-                            :class="i===index&&isTag&&'container_active'||'container'"
-                            @open="open"></swiper-cell>
-            </div>
+    <div>
+        <div class="swiperCell" v-for="(item, i) in arr" :key="i">
+            <swiper-cell
+                :quotient="item.quotient"
+                @touchstart.native="touchstart(i)"
+                @move="move($event, item)"
+                @touchend.native="touchend"
+                @close="close"
+                :disabled="disabled"
+                :type="item.type"
+                :data="item"
+                :leftContent="item.leftContent"
+                :rightContent="item.rightContent"
+                :isElastic="item.isElastic"
+                :class="
+                    (i === index && isTag && 'container_active') || 'container'
+                "
+                :key="i"
+                @open="open($event, item)"
+            >
+                swiperCell-{{ i + 1 }}
+            </swiper-cell>
         </div>
+    </div>
 </template>
 
 <script>
-import SwiperCell from 'swiper-cell'
+import SwiperCell from "swiper-cell";
+import "swiper-cell/lib/style.css";
 
 export default {
     name: "HelloWorld",
-    components: { 
-        SwiperCell
+    components: {
+        SwiperCell,
     },
-    props: {
-        msg: String,
-    },
-    data () {
+    data() {
         return {
-            index: '',
-            quotient:[2.5, 8],
+            index: "",
             isTag: false,
-            disabled:false,
-            timer:null,
-            position: ''
-        }
+            disabled: false,
+            timer: null,
+            position: "",
+            arr: [
+                {
+                    leftContent: [],
+                },
+                {
+                    rightContent: [
+                        {
+                            value: "删除",
+                            callBack: (item, data) => {
+                                console.log(item, data);
+                            },
+                        },
+                    ],
+                    quotient: [0, 1],
+                },
+                {
+                    rightContent: [
+                        {
+                            value: "删除",
+                            callBack: (item) => {
+                                console.log(item);
+                            },
+                        },
+                    ],
+                },
+                {
+                    rightContent: [
+                        {
+                            value: "删除",
+                            callBack: (item) => {
+                                console.log(item);
+                                item.value = "确认删除";
+                            },
+                        },
+                    ],
+                },
+                {
+                    type: 1,
+                    isElastic: true,
+                    rightContent: [{ value: "关注" }, { value: "收藏" }],
+                },
+                {
+                    rightContent: [{ value: "关注" }, { value: "收藏" }],
+                    type: 1,
+                    isElastic: false,
+                },
+                {
+                    type: 1,
+                    isElastic: true,
+                    leftContent: [{ value: "收藏" }],
+                    quotient: [8, 8],
+                },
+                { type: 1, isElastic: true },
+                { type: 1, isElastic: false },
+                { type: 0, isElastic: true },
+                { type: 0, isElastic: false },
+            ],
+        };
     },
     methods: {
-        open(e) {
-            this.position = e.position
-            if(e.position==='left'){
-                e.close()
+        changeArr() {
+            this.testArr[0] = Number((Math.random() * 100).toFixed(0));
+        },
+        open(e, item) {
+            this.position = e.position;
+            if (e.position === "left" && item.isElastic) {
+                e.close();
             }
         },
-        touchstart(i){
-            if(this.disabled && this.position==='left') {
-                this.disabled && clearTimeout(this.timer)
-                this.timer = null
+        touchstart(i) {
+            if (this.disabled && this.position === "left") {
+                this.disabled && clearTimeout(this.timer);
+                this.timer = null;
             }
-            this.index = i
+            this.index = i;
         },
-        touchend(){
-            if(!this.timer && this.position==='left') {
-                this.disabled = false
+        touchend() {
+            if (!this.timer && this.position === "left") {
+                this.disabled = false;
             }
         },
-        close(){
-            if(this.position==='left'){
-                this.disabled = true
+        close() {
+            if (this.position === "left") {
+                this.disabled = true;
             }
-            this.timer = setTimeout(()=>{
-                this.index = ''
-                this.isTag = false
-                this.disabled = false
-            },300)
+            this.timer = setTimeout(() => {
+                this.index = "";
+                this.isTag = false;
+                this.disabled = false;
+            }, 300);
         },
-        move(deltaX) {
-            if(deltaX>170) return this.isTag = true
-            this.isTag = false
-        }
-    }
+        move(deltaX, item) {
+            // 删除
+            // console.log(item);
+            if (item.rightContent && item.rightContent[0].value === "删除") {
+                console.log("删除");
+            }
+            // 收藏、标记
+            if (deltaX > 220 && item.isElastic) {
+                if (!this.isTag) {
+                    this.isTag = true;
+                    console.log("收藏、标记");
+                }
+                return;
+            }
+            this.isTag = false;
+        },
+    },
 };
 </script>
+
 <style lang="stylus" scoped>
-.swiperCell{
+.swiperCell {
+    >>>.cell_container {
+        height: 90px;
+        line-height: 90px;
+
+        .cell_content {
+            background: #eee;
+        }
+    }
+
     border-bottom: 1px solid #EEE;
     overflow: hidden;
-    &>.container{
-        background: #CFD0D2;
-    }
-    &>.container_active{
+
+    &>.container_active {
         background: #E8B741;
     }
 }
 </style>
+
 
 ```
 

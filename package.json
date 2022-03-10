@@ -1,7 +1,7 @@
 {
     "name": "swiper-cell",
     "description": "弹性滑动单元格",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "author": "litTaoTao <1099683985@qq.com>",
     "license": "MIT",
     "private": false,
@@ -12,7 +12,7 @@
         "components"
     ],
     "main": "lib/index.js",
-    "module": "src/index.js",
+    "module": "lib/index.js",
     "files": [
         "lib"
     ],
