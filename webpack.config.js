@@ -1,15 +1,16 @@
-var path = require("path")
-var webpack = require("webpack")
-var HtmlWebpackPlugin = require("html-webpack-plugin")
+var path = require("path");
+var webpack = require("webpack");
+var HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const env = process.env.NODE_ENV
+const env = process.env.NODE_ENV;
 const entry = {
     development: "./example/main.js",
-    production: "./src/index.js"
-}
-console.log("==================")
-console.log(process.env.NODE_ENV)
-console.log("==================")
+    production: "./example/main.js"
+};
+console.log("==================");
+console.log(process.env.NODE_ENV);
+console.log("==================");
+console.log();
 module.exports = {
     entry: entry[env],
     // output: {
@@ -72,10 +73,10 @@ module.exports = {
         })
     ],
     devtool: "#eval-source-map"
-}
+};
 
 if (env === "production") {
-    module.exports.devtool = "#source-map"
+    module.exports.devtool = "#source-map";
     module.exports.plugins = (module.exports.plugins || []).concat([
         new webpack.DefinePlugin({
             "process.env": {
@@ -91,5 +92,5 @@ if (env === "production") {
         new webpack.LoaderOptionsPlugin({
             minimize: true
         })
-    ])
+    ]);
 }
