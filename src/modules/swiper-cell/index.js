@@ -1,7 +1,7 @@
-import SwiperCell from '../../components/swiper-cell/swiper-cell.vue'
+import SwiperCell from "../../components/swiper-cell/swiper-cell";
 
 SwiperCell.install = function (Vue) {
-  Vue.component(SwiperCell.name, SwiperCell)
-}
+    Vue.component(SwiperCell.name, SwiperCell);
+};
 
-export default SwiperCell
+export default SwiperCell;

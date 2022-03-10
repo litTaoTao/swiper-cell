@@ -1,440 +1,567 @@
 <template>
-	<div
-		class="cell_container"
+    <div
+        class="cell_container"
         @touchstart="onTouchStart"
-		v-click-outside="handleClickOutside"
-		@click="getClickHandler('cell')">
-		<div
-			:style="{'transform':translateX(-1),'transition-duration':dragging}">
-			<!-- 左边 -->
-			<div ref="cellLeft"
-				 :class="['cell_left', isPostion]"
-				 v-if="leftContent"
-				 @click="getClickHandler('left', true)">
-				<div v-for="(item, index) in leftContent" :key="index">
-					<span>{{item.value}}</span>
-					<span v-if="item.icon">
-						<img v-if="/http/.test(item.icon)" :src="item.icon">
-						<i v-else :class="item.icon" aria-hidden="true"></i>
-					</span>
-				</div>
-			</div>
-			<div
-				@touchend="onClick()"
-				class="cell_content">
-					<slot></slot>
-			</div>
-			<!-- 右边 -->
-			<div ref="cellRight"
-				v-if="rightContent"
-				:class="['cell_right', isPostion]"
-				@click="getClickHandler('right', true)">
-				<div v-for="(item, index) in rightContent" 
-					:style="{'transform': translateX(index),'transition-duration':rightContent.length && dragging, 'padding-right': paddingRight(index+1)}"
-					@touchend="item.callBack&&item.callBack()"
-					:key="index">
-					<span>{{item.value}}</span>
-					<span v-if="item.icon">
-						<img v-if="/http/.test(item.icon)" :src="item.icon">
-						<i v-else :class="item.icon" aria-hidden="true"></i>
-					</span>
-				</div>
-			</div>
-		</div>
-	</div>
+        v-click-outside="handleClickOutside"
+        @click="getClickHandler('cell')"
+    >
+        <div
+            :style="{
+                transform: translateX(-1),
+            }"
+            :class="[dragging, willChange]"
+        >
+            <!-- 左边 -->
+            <div
+                ref="cellLeft"
+                :class="['cell_left', isPostion]"
+                v-if="leftContent"
+                @click="getClickHandler('left', true)"
+            >
+                <div v-for="(item, index) in leftContent" :key="index">
+                    <div>
+                        <span v-html="item.value"></span>
+                        <span v-if="item.icon">
+                            <img
+                                v-if="/http/.test(item.icon)"
+                                :src="item.icon"
+                            />
+                            <i v-else :class="item.icon" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div @touchend="onClick" class="cell_content">
+                <slot></slot>
+            </div>
+            <!-- 右边 -->
+            <div
+                ref="cellRight"
+                v-if="rightContent"
+                :class="['cell_right', isPostion]"
+                @click="getClickHandler('right', true)"
+            >
+                <div
+                    v-for="(item, index) in rightContent"
+                    :style="{
+                        transform: index && translateX(index),
+                    }"
+                    :class="[dragging, index && willChange]"
+                    @touchend="
+                        item.callBack && !lockClick && item.callBack(item)
+                    "
+                    :key="index"
+                >
+                    <div>
+                        <span v-html="item.value"></span>
+                        <span v-if="item.icon">
+                            <img
+                                v-if="/http/.test(item.icon)"
+                                :src="item.icon"
+                            />
+                            <i v-else :class="item.icon" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <div
+                        :style="scaleXFun"
+                        :class="[dragging, willChange]"
+                        class="transformScaleX"
+                    ></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script>
-import ClickOutside from '../../common/directives/ClickOutside';
-import { TouchMixin } from '../../common/mixins/touch';
+import ClickOutside from "../../common/directives/ClickOutside";
+import { TouchMixin } from "../../common/mixins/touch";
 // import func from 'vue-editor-bridge';
-export default{
-	name:"swiper-cell",
-	props: {
-		// @deprecated
-		// should be removed in next major version, use beforeClose instead
-		onClose: Function,
-		disabled: Boolean,
-		leftWidth: [Number, String],
-		rightWidth: [Number, String],
-		beforeClose: Function,
-		stopPropagation: Boolean,
-		name: {
-			type: [Number, String],
-			default: '',
-		},
-		quotient: {
-			type: Array,
-			validator: value=>{
-				if(value.length>2) value.splice(2,value.length)
-				return true
-			},
-			default: ()=> [2.5,8]
-		},
-		// 限制最多传三个
-		rightContent: {
-			type: [Array,Boolean],
-			validator: value=>{
-				if(value.length>3) value.splice(3,value.length)
-				return true
-			},
-			default: ()=> [
-				{value:"标为未读",icon:""},
-				{value:"不显示",icon:""},
-				{value:"删除",icon:""}
-			],
-		},
-		// 限制最多传一个
-		leftContent: {
-			type: [Array,Boolean],
-			validator: value=>{
-				if(value.length>1) value.splice(1,value.length)
-				return true
-			},
-			default: ()=> [
-				{value:"标记",icon:"fa fa-star-o"}
-			],
-		},
-		//
-		type:{
-			type:[Number,String],
-			default:1 //0 常规 1 定位
-		},
-		isElastic:{ //弹性
-			type:Boolean,
-			default:true
-		}
-	},
-	data(){
-		return {
-			offset: 0,
-			isDragging: false,
-			//-位移
-			elasticX:0,
-			rightNodetWidthArr: [],
-			cellRightWidth:0,
-			cellLeftWidth:0,
-			isLeft: false,
-			isRight: false
-		}
-	},
-	computed: {
-		computedLeftWidth() {
-			return +this.leftWidth || this.getWidthByRef('cellLeft');
-		},
+export default {
+    name: "swiper-cell",
+    props: {
+        // @deprecated
+        // should be removed in next major version, use beforeClose instead
+        onClose: Function,
+        disabled: Boolean,
+        leftWidth: [Number, String],
+        rightWidth: [Number, String],
+        beforeClose: Function,
+        stopPropagation: Boolean,
+        name: {
+            type: [Number, String],
+            default: "",
+        },
+        quotient: {
+            type: Array,
+            validator: (value) => {
+                if (value.length > 2) value.splice(2, value.length);
+                return true;
+            },
+            default: () => [2.5, 8],
+        },
+        // 限制最多传三个
+        rightContent: {
+            type: [Array, Boolean],
+            validator: (value) => {
+                if (value.length > 3) value.splice(3, value.length);
+                return true;
+            },
+            default: () => [
+                { value: "标为未读", icon: "" },
+                { value: "不显示", icon: "" },
+                { value: "删除", icon: "" },
+            ],
+        },
+        // 限制最多传一个
+        leftContent: {
+            type: [Array, Boolean],
+            validator: (value) => {
+                if (value.length > 1) value.splice(1, value.length);
+                return true;
+            },
+            default: () => [{ value: "标记", icon: "fa fa-star-o" }],
+        },
+        //
+        type: {
+            type: [Number, String],
+            default: 1, // 0 常规 1 定位
+        },
+        isElastic: {
+            // 弹性
+            type: Boolean,
+            default: true,
+        },
+    },
+    data() {
+        return {
+            offset: 0,
+            isDragging: false,
+            // -位移
+            elasticX: 0,
+            rightNodetWidthArr: [],
+            cellRightWidth: 0,
+            cellLeftWidth: 0,
+            isLeft: false,
+            isRight: false,
+            lockClick: false,
+            willChange: "willChangeAuto",
+        };
+    },
+    computed: {
+        computedLeftWidth() {
+            return +this.leftWidth || this.getWidthByRef("cellLeft");
+        },
 
-		computedRightWidth() {
-			return +this.rightWidth || this.getWidthByRef('cellRight');
-		},
+        computedRightWidth() {
+            return +this.rightWidth || this.getWidthByRef("cellRight");
+        },
 
-		isPostion() {
-			return this.type && 'cellPostion' || ''
-		},
+        isPostion() {
+            return (this.type && "cellPostion") || "";
+        },
 
-		dragging(){
-			return this.offset && this.isDragging && '0ms' || '300ms'
-		},
-		
-		translateX() {
-			return function(index) {
-				let width = 0;
-				this.rightNodetWidthArr.map((item, idx)=>{
-					if(idx < index) width += item.width
-				})
-				if(index < 0) return 'translateX(' + (this.offset + (this.isElastic?this.elasticX:0)) + 'px)'
-				return this.type && 'translateX(' + (-this.offset*width/this.cellRightWidth - (this.isElastic?this.elasticX/this.rightContent.length*index:0)) + 'px)' || ''
-			}
-		},
+        dragging() {
+            return (this.offset && this.isDragging) || "duration";
+        },
 
-		paddingRight(){
-			return function(index) { 
-				return 10 + (this.isElastic && Math.abs(this.elasticX/this.rightContent.length) || 0)  + 'px'
-			}
-		}
-	},
-	mounted() {
-		//防止弹性效果影响宽度
-		this.cellRightWidth = this.getWidthByRef('cellRight');
-		this.cellLeftWidth = this.getWidthByRef('cellLeft');
-		this.$nextTick(()=> {
-			this.$refs['cellRight'].children && Array.from(this.$refs['cellRight'].children).map((item) => {
-				this.rightNodetWidthArr.push(item.getBoundingClientRect()) 
-			});
-		})
-		this.bindTouchEvent(this.$el);
-	},
-	mixins: [
-		TouchMixin
-	],
-	directives: {
-		ClickOutside
-	},
-	methods: {
-		getWidthByRef(ref) {
-			if (this.$refs[ref]) {
-				const rect = this.$refs[ref].getBoundingClientRect();
-				//type=1定位时获取宽度为0，为此采用获取子元素宽度之和
-				if(!rect.width){
-					let childWidth = 0;
-					for(const item of this.$refs[ref].children){
-						childWidth += item.getBoundingClientRect().width
-					}
-					return childWidth;
-				}
-				return rect.width;
-			}
-			return 0;
-		},
+        translateX() {
+            return function (index) {
+                if (index < 0) {
+                    return (
+                        "translateX(" +
+                        (this.offset + (this.isElastic ? this.elasticX : 0)) +
+                        "px)"
+                    );
+                }
+                // 右滑取消下列事件
+                if (this.offset > 0) return;
+                let width = 0;
+                this.rightNodetWidthArr.map((item, idx) => {
+                    if (idx < index) width += item.width;
+                });
+                let elasticDistance =
+                    (this.elasticX / this.rightContent.length) * index;
+                //
+                if (!this.type && this.isElastic) {
+                    return "translateX(" + -elasticDistance + "px)";
+                }
+                //
+                return (
+                    (this.type &&
+                        "translateX(" +
+                            ((-this.offset * width) / this.cellRightWidth -
+                                (this.isElastic ? elasticDistance : 0)) +
+                            "px)") ||
+                    ""
+                );
+            };
+        },
 
-		handleClickOutside(){
-			if(this.opened) this.close()
-		},
+        scaleXFun() {
+            // 右滑取消下列事件
+            if (this.offset > 0) return false;
+            let scale =
+                (this.isElastic &&
+                    Math.abs(this.elasticX / this.rightContent.length)) * 2 ||
+                0;
+            return `transform:scaleX(${scale})`;
+        },
+    },
+    mounted() {
+        // 防止弹性效果影响宽度
+        this.cellRightWidth = this.getWidthByRef("cellRight");
+        this.cellLeftWidth = this.getWidthByRef("cellLeft");
 
-		// @exposed-api
-		open(position) {
-			const offset =
-			position === 'left' ? this.computedLeftWidth : -this.computedRightWidth;
+        this.$nextTick(() => {
+            this.$refs["cellRight"].children &&
+                Array.from(this.$refs["cellRight"].children).map((item) => {
+                    this.rightNodetWidthArr.push(item.getBoundingClientRect());
+                });
+        });
+        this.bindTouchEvent(this.$el);
+    },
+    mixins: [TouchMixin],
+    directives: {
+        ClickOutside,
+    },
+    methods: {
+        getWidthByRef(ref) {
+            if (this.$refs[ref]) {
+                const rect = this.$refs[ref].getBoundingClientRect();
+                // type=1定位时获取宽度为0，为此采用获取子元素宽度之和
+                if (!rect.width) {
+                    let childWidth = 0;
+                    for (const item of this.$refs[ref].children) {
+                        childWidth += item.getBoundingClientRect().width;
+                    }
+                    return childWidth;
+                }
+                return rect.width;
+            }
+            return 0;
+        },
 
-			this.opened = true;
-			this.offset = offset;
+        handleClickOutside() {
+            if (this.opened) this.close();
+        },
 
-			this.$emit('open', {
-				position,
-				name: this.name,
-				close: this.close,
-				// @deprecated
-				// should be removed in next major version
-				detail: this.name,
-			});
-		},
+        // @exposed-api
+        open(position) {
+            const offset =
+                position === "left"
+                    ? this.computedLeftWidth
+                    : -this.computedRightWidth;
 
-		// @exposed-api
-		close(position) {
-			this.offset = 0;
+            this.opened = true;
+            this.offset = offset;
 
-			if (this.opened) {
-				this.opened = false;
-				this.$emit('close', {
-					position,
-					name: this.name,
-				});
-			}
-		},
+            this.$emit("open", {
+                position,
+                name: this.name,
+                close: this.close,
+                // @deprecated
+                // should be removed in next major version
+                detail: this.name,
+            });
+        },
 
-		onTouchStart(event) {
-			if (this.disabled) {
-				return;
-			}
-			this.isLeft = false;
-			this.isRight = false;
-			this.startOffset = this.offset;
-			this.touchStart(event);
-		},
+        // @exposed-api
+        close(position) {
+            this.offset = 0;
 
-		range(num, min, max) {
-			return Math.min(Math.max(num, min), max);
-		},
+            if (this.opened) {
+                this.opened = false;
+                this.$emit("close", {
+                    position,
+                    name: this.name,
+                });
+            }
+        },
 
-		preventDefault(event) {
-			/* istanbul ignore else */
-			if (typeof event.cancelable !== 'boolean' || event.cancelable) {
-				event.preventDefault();
-			}
+        onTouchStart(event) {
+            if (this.disabled) {
+                return;
+            }
+            this.isLeft = false;
+            this.isRight = false;
+            this.startOffset = this.offset;
+            //
+            this.willChange = "willChange";
+            this.touchStart(event);
+        },
 
-			if (this.isStopPropagations) {
-				// eslint-disable-next-line no-undef
-				stopPropagation(event);
-			}
-		},
+        range(num, min, max) {
+            return Math.min(Math.max(num, min), max);
+        },
 
-		stopPropagations(event) {
-			event.stopPropagation();
-		},
+        preventDefault(event) {
+            /* istanbul ignore else */
+            if (typeof event.cancelable !== "boolean" || event.cancelable) {
+                event.preventDefault();
+            }
 
-		onTouchMove(event) {
-			if (this.disabled) {
-				return;
-			}
-			this.touchMove(event);
-			if (this.direction === 'horizontal') {
-				this.isDragging = true;
-				this.lockClick = true;
-				const isPrevent = !this.opened || this.deltaX * this.startOffset < 0;
-				if (isPrevent) {
-					this.preventDefault(event, this.stopPropagation);
-				}
-				
-				this.offset = this.range(
-					this.deltaX + this.startOffset,
-					-this.computedRightWidth,
-					this.computedLeftWidth
-				);
+            if (this.isStopPropagations) {
+                // eslint-disable-next-line no-undef
+                stopPropagation(event);
+            }
+        },
 
-				if(this.offset>0 && !this.isRight){
-					this.isLeft = true
-				}else{
-					if(this.offset<0 && this.isLeft) {
-						this.offset = 0
-						this.elasticX = 0
-					}
-				}
-				if(this.offset<0 && !this.isLeft){
-					this.isRight = true
-				}else{
-					if(this.offset>0 && this.isRight) {
-						this.offset = 0
-						this.elasticX = 0
-					}
-				}
-				this.$emit('move', this.deltaX);
-				//增加弹性
-				if(this.computedRightWidth && this.offset === -this.computedRightWidth || this.computedLeftWidth && this.offset === this.computedLeftWidth){
-					//
-					this.preventDefault(event, this.stopPropagation);
-					let quotient = this.offset > 0 && this.quotient[0] || this.quotient[1]
-					//弹性系数
-					this.elasticX = (this.deltaX + this.startOffset - this.offset)/quotient;
-				}
-			}else{
-				//上下滑动后取消close
-				this.isDragging = true;
-				this.lockClick = true;
-			}
-		},
+        stopPropagations(event) {
+            event.stopPropagation();
+        },
 
-		onTouchEnd() {
-			if (this.disabled) {
-				return;
-			}
-			//回弹
-			this.elasticX = 0
-			if (this.isDragging) {
-				this.toggle(this.offset > 0 ? 'left' : 'right');
-				this.isDragging = false;
-				// compatible with desktop scenario
-				setTimeout(() => {
-					this.lockClick = false;
-				}, 0);
-			}
-		},
+        onTouchMove(event) {
+            if (this.disabled) {
+                return;
+            }
+            this.touchMove(event);
+            if (this.direction === "horizontal") {
+                this.isDragging = true;
+                this.lockClick = true;
+                const isPrevent =
+                    !this.opened || this.deltaX * this.startOffset < 0;
+                if (isPrevent) {
+                    this.preventDefault(event, this.stopPropagation);
+                }
 
-		toggle(direction) {
-			const offset = Math.abs(this.offset);
-			const THRESHOLD = 0.15;
-			const threshold = this.opened ? 1 - THRESHOLD : THRESHOLD;
-			const { computedLeftWidth, computedRightWidth } = this;
+                this.offset = this.range(
+                    this.deltaX + this.startOffset,
+                    -this.computedRightWidth,
+                    this.computedLeftWidth
+                );
 
-			if (
-			computedRightWidth &&
-			direction === 'right' &&
-			offset > computedRightWidth * threshold
-			) {
-				this.open('right');
-			} else if (
-			computedLeftWidth &&
-			direction === 'left' &&
-			offset > computedLeftWidth * threshold
-			) {
-				this.open('left');
-			} else {
-				this.close();
-			}
-		},
+                if (this.offset > 0 && !this.isRight) {
+                    this.isLeft = true;
+                } else {
+                    if (this.offset < 0 && this.isLeft) {
+                        this.offset = 0;
+                        this.elasticX = 0;
+                    }
+                }
+                if (this.offset < 0 && !this.isLeft) {
+                    this.isRight = true;
+                } else {
+                    if (this.offset > 0 && this.isRight) {
+                        this.offset = 0;
+                        this.elasticX = 0;
+                    }
+                }
+                this.$emit("move", this.deltaX);
+                // 增加弹性
+                if (
+                    (this.computedRightWidth &&
+                        this.offset === -this.computedRightWidth) ||
+                    (this.computedLeftWidth &&
+                        this.offset === this.computedLeftWidth)
+                ) {
+                    //
+                    this.preventDefault(event, this.stopPropagation);
+                    let quotient =
+                        (this.offset > 0 && this.quotient[0]) ||
+                        this.quotient[1];
+                    // 弹性系数
+                    this.elasticX =
+                        (this.deltaX + this.startOffset - this.offset) /
+                        quotient;
+                }
+            } else {
+                // 上下滑动后取消close
+                this.isDragging = true;
+                this.lockClick = true;
+            }
+        },
 
-		onClick(position = 'outside') {
-			this.$emit('click', position);
+        onTouchEnd() {
+            if (this.disabled) {
+                return;
+            }
+            // 回弹
+            this.elasticX = 0;
+            if (this.isDragging) {
+                this.toggle(this.offset > 0 ? "left" : "right");
+                this.isDragging = false;
+                // compatible with desktop scenario
+                setTimeout(() => {
+                    this.lockClick = false;
+                }, 0);
+                //
+            }
+            setTimeout(() => {
+                this.willChange = "willChangeAuto";
+            }, 300);
+        },
 
-			if (this.opened && !this.lockClick) {
-				if (this.beforeClose) {
-					this.beforeClose({
-						position,
-						name: this.name,
-						instance: this,
-					});
-				} else if (this.onClose) {
-					this.onClose(position, this, { name: this.name });
-				} else {
-					this.close(position);
-				}
-			}
-		},
+        toggle(direction) {
+            const offset = Math.abs(this.offset);
+            const THRESHOLD = 0.15;
+            const threshold = this.opened ? 1 - THRESHOLD : THRESHOLD;
+            const { computedLeftWidth, computedRightWidth } = this;
 
-		getClickHandler(position, stop) {
-			return (event) => {
-				if (stop) {
-					this.stopPropagations(event)
-				}
-				this.onClick(position);
-			};
-		},
-	}
-}
+            if (
+                computedRightWidth &&
+                direction === "right" &&
+                offset > computedRightWidth * threshold
+            ) {
+                this.open("right");
+            } else if (
+                computedLeftWidth &&
+                direction === "left" &&
+                offset > computedLeftWidth * threshold
+            ) {
+                this.open("left");
+            } else {
+                this.close();
+            }
+        },
+
+        onClick(position = "outside") {
+            this.$emit("click", position);
+
+            if (this.opened && !this.lockClick) {
+                if (this.beforeClose) {
+                    this.beforeClose({
+                        position,
+                        name: this.name,
+                        instance: this,
+                    });
+                } else if (this.onClose) {
+                    this.onClose(position, this, { name: this.name });
+                } else {
+                    this.close(position);
+                }
+            }
+        },
+
+        getClickHandler(position, stop) {
+            return (event) => {
+                if (stop) {
+                    this.stopPropagations(event);
+                }
+                this.onClick(position);
+            };
+        },
+    },
+};
 </script>
 
 <style lang="stylus" scoped>
-.cell_container{
-	position: relative;
-	overflow: hidden;
-	line-height: 4em;
-	height: 4em;
-	background: #CFD0D2;
-	&>div{
-		height: 100%;
-		.cell_content{
-			height: 100%;
-			width: 100%;
-			position:absolute;
-			text-align: center;
-			background: #FFF;
-			&:active{
-				background: #EEE;
-			}
-		}
-		.cell_left,.cell_right{
-			position: absolute;
-			top: 0;
-			height: 100%;
-			display: flex;
-			color: #FFF;
-			&>div{
-				white-space:nowrap;
-				box-sizing: border-box;
-				display: flex;
-				align-items: center;
-				padding:0 10px;
-				&>span{
-					pointer-events: none;
-					display: inline-block;
-					width: 100%;
-					text-align: center
-					margin: 0 2px;
-				}
-			}
-		}
-		.cell_right{
-			right: 0;
-			transform: translateX(100%);
-			&>div:nth-child(1){
-				background: #3D83E5;
-			}
-			&>div:nth-child(2){
-				background: #EEA151;
-			}
-			&>div:nth-child(3){
-				background: #E75E58;
-			}
-		}
-		.cell_left{
-			left: 0;
-			&>div{
-				transform: translateX(-100%);
-			}
-		}
-		.cellPostion{
-			&>div{
-				position: absolute;
-			}
-		}
-	}
+.cell_container {
+    position: relative;
+    overflow: hidden;
+    line-height: 4em;
+    height: 4em;
+    background: #CFD0D2;
+
+    img {
+        width: 1.5em;
+        height: 1.5em;
+    }
+
+    &>div {
+        height: 100%;
+
+        .cell_content {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            text-align: center;
+            background: #FFF;
+
+            &:active {
+                background: #EEE;
+            }
+        }
+
+        .cell_left, .cell_right {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            display: flex;
+            color: #FFF;
+
+            &>div {
+                height: 100%;
+                white-space: nowrap;
+                box-sizing: border-box;
+                display: flex;
+                align-items: center;
+
+                &>div:nth-child(1) {
+                    padding: 0 10px;
+                }
+
+                &>span {
+                    pointer-events: none;
+                    display: inline-block;
+                    width: 100%;
+                    text-align: center;
+                    margin: 0 2px;
+                }
+            }
+        }
+
+        .cell_right {
+            right: 0;
+            transform: translateX(100%);
+
+            .transformScaleX {
+                display: inline-block;
+                height: 100%;
+                width: 1px;
+                transform-origin: 0;
+            }
+
+            &>div:nth-child(1) {
+                background: #3D83E5;
+
+                div {
+                    background: #3D83E5;
+                }
+            }
+
+            &>div:nth-child(2) {
+                background: #EEA151;
+
+                div {
+                    background: #EEA151;
+                }
+            }
+
+            &>div:nth-child(3) {
+                background: #E75E58;
+
+                div {
+                    background: #E75E58;
+                }
+            }
+        }
+
+        .cell_left {
+            left: 0;
+
+            &>div {
+                transform: translateX(-100%);
+            }
+        }
+
+        .cellPostion {
+            &>div {
+                position: absolute;
+            }
+        }
+    }
+
+    .duration {
+        transition-duration: 300ms;
+    }
+
+    .willChange {
+        will-change: transform, contents;
+    }
+
+    .willChangeAuto {
+        will-change: auto;
+    }
 }
 </style>

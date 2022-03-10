@@ -1,5 +1,5 @@
-import SwiperCell from './modules/swiper-cell'
+import SwiperCell from "./modules/swiper-cell";
 
 export {
     SwiperCell
-}
+};
