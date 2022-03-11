@@ -7,7 +7,6 @@
     >
         <div
             :style="{
-                'will-change': getWillChange,
                 transform: translateX(-1),
                 'transition-duration': dragging,
             }"
@@ -45,7 +44,6 @@
                 <div
                     v-for="(item, index) in rightContent"
                     :style="{
-                        'will-change': index && getWillChange,
                         transform: index && translateX(index),
                         'transition-duration': index && dragging,
                     }"
@@ -66,7 +64,6 @@
                     </div>
                     <div
                         :style="{
-                            'will-change': getWillChange,
                             transform: `scaleX(${scaleX})`,
                             'transition-duration': dragging,
                         }"
@@ -150,7 +147,6 @@ export default {
             isLeft: false,
             isRight: false,
             lockClick: false,
-            willChange: false,
         };
     },
     computed: {
@@ -211,9 +207,6 @@ export default {
                     Math.abs(this.elasticX / this.rightContent.length)) * 2 ||
                 0;
             return scale;
-        },
-        getWillChange() {
-            return (this.willChange && "transform, contents") || "auto";
         },
     },
     mounted() {
@@ -291,7 +284,6 @@ export default {
             if (this.disabled) {
                 return;
             }
-            this.willChange = true;
             this.isLeft = false;
             this.isRight = false;
             this.startOffset = this.offset;
@@ -393,9 +385,6 @@ export default {
                 setTimeout(() => {
                     this.lockClick = false;
                 }, 0);
-                setTimeout(() => {
-                    this.willChange = false;
-                }, 300);
                 //
             }
         },
