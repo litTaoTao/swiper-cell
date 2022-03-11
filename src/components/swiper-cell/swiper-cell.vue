@@ -7,9 +7,10 @@
     >
         <div
             :style="{
+                'will-change': getWillChange,
                 transform: translateX(-1),
+                'transition-duration': dragging,
             }"
-            :class="[dragging, willChange]"
         >
             <!-- 左边 -->
             <div
@@ -44,9 +45,10 @@
                 <div
                     v-for="(item, index) in rightContent"
                     :style="{
+                        'will-change': index && getWillChange,
                         transform: index && translateX(index),
+                        'transition-duration': index && dragging,
                     }"
-                    :class="[dragging, index && willChange]"
                     @touchend="
                         item.callBack && !lockClick && item.callBack(item)
                     "
@@ -63,8 +65,11 @@
                         </span>
                     </div>
                     <div
-                        :style="scaleXFun"
-                        :class="[dragging, willChange]"
+                        :style="{
+                            'will-change': getWillChange,
+                            transform: `scaleX(${scaleX})`,
+                            'transition-duration': dragging,
+                        }"
                         class="transformScaleX"
                     ></div>
                 </div>
@@ -145,7 +150,7 @@ export default {
             isLeft: false,
             isRight: false,
             lockClick: false,
-            willChange: "willChangeAuto",
+            willChange: false,
         };
     },
     computed: {
@@ -162,11 +167,13 @@ export default {
         },
 
         dragging() {
-            return (this.offset && this.isDragging) || "duration";
+            return (this.offset && this.isDragging && "0s") || "0.3s";
+            // return (this.offset && this.isDragging) || "duration";
         },
 
         translateX() {
             return function (index) {
+                // 外层移动
                 if (index < 0) {
                     return (
                         "translateX(" +
@@ -180,32 +187,33 @@ export default {
                 this.rightNodetWidthArr.map((item, idx) => {
                     if (idx < index) width += item.width;
                 });
+                // 元素应当滑动距离
                 let elasticDistance =
                     (this.elasticX / this.rightContent.length) * index;
-                //
+
+                // 无定位、有弹性状态
                 if (!this.type && this.isElastic) {
-                    return "translateX(" + -elasticDistance + "px)";
+                    return `translateX(${-elasticDistance}px)`;
                 }
-                //
-                return (
-                    (this.type &&
-                        "translateX(" +
-                            ((-this.offset * width) / this.cellRightWidth -
-                                (this.isElastic ? elasticDistance : 0)) +
-                            "px)") ||
-                    ""
-                );
+                elasticDistance =
+                    (-this.offset * width) / this.cellRightWidth -
+                    ((this.isElastic && elasticDistance) || 0);
+                // 其他状态
+                return (this.type && `translateX(${elasticDistance}px)`) || "";
             };
         },
 
-        scaleXFun() {
+        scaleX() {
             // 右滑取消下列事件
             if (this.offset > 0) return false;
             let scale =
                 (this.isElastic &&
                     Math.abs(this.elasticX / this.rightContent.length)) * 2 ||
                 0;
-            return `transform:scaleX(${scale})`;
+            return scale;
+        },
+        getWillChange() {
+            return (this.willChange && "transform, contents") || "auto";
         },
     },
     mounted() {
@@ -283,11 +291,11 @@ export default {
             if (this.disabled) {
                 return;
             }
+            this.willChange = true;
             this.isLeft = false;
             this.isRight = false;
             this.startOffset = this.offset;
             //
-            this.willChange = "willChange";
             this.touchStart(event);
         },
 
@@ -385,11 +393,11 @@ export default {
                 setTimeout(() => {
                     this.lockClick = false;
                 }, 0);
+                setTimeout(() => {
+                    this.willChange = false;
+                }, 300);
                 //
             }
-            setTimeout(() => {
-                this.willChange = "willChangeAuto";
-            }, 300);
         },
 
         toggle(direction) {
@@ -550,18 +558,6 @@ export default {
                 position: absolute;
             }
         }
-    }
-
-    .duration {
-        transition-duration: 300ms;
-    }
-
-    .willChange {
-        will-change: transform, contents;
-    }
-
-    .willChangeAuto {
-        will-change: auto;
     }
 }
 </style>

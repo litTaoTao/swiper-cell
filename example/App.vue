@@ -50,7 +50,7 @@ export default {
                         {
                             value: "删除",
                             callBack: (item, data) => {
-                                console.log(item, data);
+                                // console.log(item, data);
                             },
                         },
                     ],
@@ -61,7 +61,7 @@ export default {
                         {
                             value: "删除",
                             callBack: (item) => {
-                                console.log(item);
+                                // console.log(item);
                             },
                         },
                     ],
@@ -71,8 +71,7 @@ export default {
                         {
                             value: "删除",
                             callBack: (item) => {
-                                console.log(item);
-                                item.value = "确认删除";
+                                // console.log(item);
                             },
                         },
                     ],
@@ -136,7 +135,7 @@ export default {
             // 删除
             // console.log(item);
             if (item.rightContent && item.rightContent[0].value === "删除") {
-                console.log("删除");
+                // console.log("删除");
             }
             // 收藏、标记
             if (deltaX > 220 && item.isElastic) {

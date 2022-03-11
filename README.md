@@ -2,7 +2,15 @@
 
 > 弹性滑动单元格
 
+
 ## Install
+
+```shell
+npm install swiper-cell --save
+
+```
+
+## Usage
 
 ``` bash
 import SwiperCell from "swiper-cell";
